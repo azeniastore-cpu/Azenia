@@ -1,4 +1,4 @@
-const CACHE_NAME = "azenia-v5-cloud";
+const CACHE_NAME = "azenia-v6-cloud";
 self.addEventListener("install", (event) => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => { event.waitUntil(clients.claim()); });
 self.addEventListener("fetch", (event) => {
