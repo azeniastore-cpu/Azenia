@@ -129,26 +129,35 @@ async function handleImageUpload(event) {
 }
 
 function initApp() {
+    // 1. VİTRİN ÜRÜNLERİ (Herkese Açıktır, hemen yüklenir)
     db.collection('guven3d_urunler').onSnapshot((snapshot) => {
         catalog = [];
         snapshot.forEach(doc => catalog.push({ id: doc.id, ...doc.data() }));
         renderVitrin(); updateDashboardStats();
     });
-    db.collection('guven3d_siparisler').orderBy('date', 'desc').onSnapshot((snapshot) => {
-        orders = [];
-        snapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
-        renderOrders(); updateDashboardStats();
-    });
-    db.collection('guven3d_filamentler').onSnapshot((snapshot) => {
-        materials = [];
-        snapshot.forEach(doc => materials.push({ id: doc.id, ...doc.data() }));
-        if(tempReqMaterials.length === 0 && materials.length > 0) tempReqMaterials = [{ id: materials[0].id, weight: 25, name: materials[0].name }];
-        renderMaterials(); renderReqMaterialRows(); updateDashboardStats();
-    });
-    db.collection('guven3d_musteriler').onSnapshot((snapshot) => {
-        customers = [];
-        snapshot.forEach(doc => customers.push({ id: doc.id, ...doc.data() }));
-        renderCustomers(); populateOrderFormSelects();
+
+    // 2. TİCARİ SIRLAR (Sadece Firebase giriş onayı verildikten SONRA yüklenir)
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            db.collection('guven3d_siparisler').orderBy('date', 'desc').onSnapshot((snapshot) => {
+                orders = [];
+                snapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
+                renderOrders(); updateDashboardStats();
+            });
+            
+            db.collection('guven3d_filamentler').onSnapshot((snapshot) => {
+                materials = [];
+                snapshot.forEach(doc => materials.push({ id: doc.id, ...doc.data() }));
+                if(tempReqMaterials.length === 0 && materials.length > 0) tempReqMaterials = [{ id: materials[0].id, weight: 25, name: materials[0].name }];
+                renderMaterials(); renderReqMaterialRows(); updateDashboardStats();
+            });
+            
+            db.collection('guven3d_musteriler').onSnapshot((snapshot) => {
+                customers = [];
+                snapshot.forEach(doc => customers.push({ id: doc.id, ...doc.data() }));
+                renderCustomers(); populateOrderFormSelects();
+            });
+        }
     });
 
     const dot = document.getElementById("cloudStatusDot");
