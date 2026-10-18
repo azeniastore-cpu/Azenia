@@ -129,14 +129,12 @@ async function handleImageUpload(event) {
 }
 
 function initApp() {
-    // 1. VİTRİN ÜRÜNLERİ (Herkese Açıktır, hemen yüklenir)
     db.collection('guven3d_urunler').onSnapshot((snapshot) => {
         catalog = [];
         snapshot.forEach(doc => catalog.push({ id: doc.id, ...doc.data() }));
         renderVitrin(); updateDashboardStats();
     });
 
-    // 2. TİCARİ SIRLAR (Sadece Firebase giriş onayı verildikten SONRA yüklenir)
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             db.collection('guven3d_siparisler').orderBy('date', 'desc').onSnapshot((snapshot) => {
@@ -390,22 +388,59 @@ function renderOrders() {
     }).join('');
 }
 
+function populateFilamentFilters() {
+    const brandSet = new Set();
+    const colorSet = new Set();
+    materials.forEach(m => {
+        if(m.brand) brandSet.add(m.brand);
+        if(m.color) colorSet.add(m.color);
+    });
+
+    const bSelect = document.getElementById('filterMatBrand');
+    const cSelect = document.getElementById('filterMatColor');
+    if(!bSelect || !cSelect) return;
+
+    const currB = bSelect.value;
+    const currC = cSelect.value;
+
+    bSelect.innerHTML = `<option value="Tümü">Tüm Markalar</option>` + Array.from(brandSet).map(b => `<option value="${b}">${b}</option>`).join('');
+    cSelect.innerHTML = `<option value="Tümü">Tüm Renkler</option>` + Array.from(colorSet).map(c => `<option value="${c}">${c}</option>`).join('');
+
+    if (Array.from(brandSet).includes(currB)) bSelect.value = currB;
+    if (Array.from(colorSet).includes(currC)) cSelect.value = currC;
+}
+
 function renderMaterials() {
     const container = document.getElementById('materialsGridContainer');
     if (!container) return;
-    if (materials.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-slate-400">Kayıtlı filament bulunamadı.</div>`;
+
+    populateFilamentFilters();
+
+    const bFilter = document.getElementById('filterMatBrand')?.value || "Tümü";
+    const cFilter = document.getElementById('filterMatColor')?.value || "Tümü";
+
+    let filtered = materials.filter(m => {
+        const matchesB = bFilter === "Tümü" || m.brand === bFilter;
+        const matchesC = cFilter === "Tümü" || m.color === cFilter;
+        return matchesB && matchesC;
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-slate-400">Aranan kriterlerde filament bulunamadı.</div>`;
         return;
     }
-    container.innerHTML = materials.map(mat => {
+
+    container.innerHTML = filtered.map(mat => {
         const pct = Math.min(100, Math.max(0, Math.round((Number(mat.stock) / 1000) * 100)));
         const barColor = pct > 50 ? 'bg-emerald-500' : pct > 20 ? 'bg-amber-500' : 'bg-rose-500';
+        const dispName = (mat.brand && mat.color) ? `${mat.brand} - ${mat.color}` : mat.name;
+
         return `
             <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3 relative group">
                 <button onclick="deleteMaterial('${mat.id}')" class="absolute top-2 right-2 text-rose-500/50 hover:text-rose-400 text-xs hidden group-hover:block"><i class="fa-solid fa-trash"></i></button>
                 <div class="flex justify-between items-start">
                     <div>
-                        <h4 class="text-sm font-bold text-white pr-4">${mat.name}</h4>
+                        <h4 class="text-sm font-bold text-white pr-4">${dispName}</h4>
                         <p class="text-[11px] text-slate-400">Kg: ₺${mat.price}</p>
                     </div>
                     <span class="text-xs font-extrabold px-2 py-1 rounded-lg bg-slate-950 text-amber-400 border border-slate-800">${mat.stock}g</span>
@@ -414,7 +449,7 @@ function renderMaterials() {
                     <div class="${barColor} h-full transition-all" style="width: ${pct}%"></div>
                 </div>
                 <div class="flex items-center justify-between mt-2">
-                    <span class="text-[10px] text-slate-400">%${pct}</span>
+                    <button onclick="manualUpdateMatStock('${mat.id}')" class="text-[10px] bg-indigo-600/20 text-indigo-300 px-2.5 py-1.5 rounded transition hover:bg-indigo-600/40"><i class="fa-solid fa-pen"></i> Stok Gir</button>
                     <div class="flex gap-1">
                         <button onclick="updateMatStock('${mat.id}', -50)" class="bg-slate-800 px-2 py-1 rounded text-[10px] text-slate-300">-50g</button>
                         <button onclick="updateMatStock('${mat.id}', 100)" class="bg-slate-800 px-2 py-1 rounded text-[10px] text-emerald-300">+100g</button>
@@ -423,9 +458,24 @@ function renderMaterials() {
             </div>`;
     }).join('');
 }
+
 async function updateMatStock(id, delta) {
     const mat = materials.find(m => m.id === id);
     if(mat) await db.collection('guven3d_filamentler').doc(id).update({ stock: Math.max(0, mat.stock + delta) });
+}
+
+async function manualUpdateMatStock(id) {
+    const mat = materials.find(m => m.id === id);
+    if(!mat) return;
+    const addAmount = prompt(`${mat.brand || ''} ${mat.color || mat.name} için EKLENECEK miktarı (gram) girin:\n(Örneğin: 250 veya azaltmak için -100)`);
+    if(addAmount === null || addAmount.trim() === '') return;
+    const delta = parseInt(addAmount, 10);
+    if(!isNaN(delta)) {
+        await db.collection('guven3d_filamentler').doc(id).update({ stock: Math.max(0, mat.stock + delta) });
+        showToast("Stok başarıyla güncellendi!");
+    } else {
+        showToast("Geçersiz miktar girdiniz!", "error");
+    }
 }
 
 function renderCustomers() {
@@ -484,11 +534,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('addMaterialBtn')?.addEventListener('click', async () => {
+        const brand = document.getElementById('newMatBrand').value.trim();
+        const color = document.getElementById('newMatColor').value.trim();
+        
+        if (!brand || !color) {
+            showToast("Marka ve Renk alanları zorunludur!", "error");
+            return;
+        }
+
+        const fullName = `${brand} ${color}`;
+        
+        // Çift kayıt engelleme kontrolü
+        const exists = materials.some(m => m.name.toLowerCase() === fullName.toLowerCase());
+        if (exists) {
+            showToast("Bu marka ve renkte bir filament zaten ekli!", "error");
+            return;
+        }
+
         await db.collection('guven3d_filamentler').add({
-            name: document.getElementById('newMatName').value, stock: parseFloat(document.getElementById('newMatStock').value)||1000,
+            brand: brand, color: color, name: fullName,
+            stock: parseFloat(document.getElementById('newMatStock').value)||1000,
             price: parseFloat(document.getElementById('newMatPrice').value)||650
         });
-        showToast("Filament eklendi!"); document.getElementById('newMatName').value = '';
+        showToast("Filament başarıyla eklendi!"); 
+        document.getElementById('newMatBrand').value = '';
+        document.getElementById('newMatColor').value = '';
     });
 
     document.getElementById('addCustomerBtn')?.addEventListener('click', async () => {
@@ -522,6 +592,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         reader.readAsText(file);
     });
+
+    document.getElementById('filterMatBrand')?.addEventListener('change', renderMaterials);
+    document.getElementById('filterMatColor')?.addEventListener('change', renderMaterials);
 
     initApp();
 });
