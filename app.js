@@ -384,6 +384,10 @@ function renderOrders() {
 function renderMaterials() {
     const container = document.getElementById('materialsGridContainer');
     if (!container) return;
+    if (materials.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-slate-400">Kayıtlı filament bulunamadı.</div>`;
+        return;
+    }
     container.innerHTML = materials.map(mat => {
         const pct = Math.min(100, Math.max(0, Math.round((Number(mat.stock) / 1000) * 100)));
         const barColor = pct > 50 ? 'bg-emerald-500' : pct > 20 ? 'bg-amber-500' : 'bg-rose-500';
@@ -418,6 +422,10 @@ async function updateMatStock(id, delta) {
 function renderCustomers() {
     const container = document.getElementById('customersGridContainer');
     if (!container) return;
+    if (customers.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-slate-400">Kayıtlı müşteri bulunamadı.</div>`;
+        return;
+    }
     container.innerHTML = customers.map(cust => `
         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex justify-between items-center group">
             <div>
