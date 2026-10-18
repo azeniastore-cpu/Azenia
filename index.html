@@ -133,4 +133,115 @@
                 </div>
 
                 <div class="lg:col-span-7 space-y-4">
-                    <div class="bg-slate-900/90 border border-slate-8
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-4">
+                        <div class="flex items-center justify-between"><h3 class="text-sm font-bold text-indigo-300"><i class="fa-solid fa-calculator"></i> Reçete & Maliyet</h3><button type="button" id="addReqMaterialRowBtn" class="text-xs bg-indigo-600/20 text-indigo-300 px-3 py-1.5 rounded-lg">+ Filament</button></div>
+                        <div id="reqMaterialsList" class="space-y-2.5"></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">Baskı Süresi</label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="prodPrintTime" placeholder="Saat" value="1" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+                                    <input type="number" id="prodPrintTimeMin" placeholder="Dk" value="0" min="0" max="59" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+                                </div>
+                            </div>
+                            <div><label class="block text-xs font-bold text-slate-300 mb-1">Birim Maliyet</label><div id="calculatedCostDisplay" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm font-extrabold text-amber-400">₺0.00</div></div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                            <div><label class="block text-xs font-bold text-emerald-400 mb-1">Satış Fiyatı (₺) *</label><input type="number" id="prodFinalPrice" class="w-full bg-slate-950 border border-emerald-500/50 rounded-xl px-3 py-2 text-base font-extrabold text-white"></div>
+                            <div class="flex items-end gap-1.5">
+                                <button type="button" id="calcPrice2xBtn" class="flex-1 bg-slate-800 text-xs font-bold py-2.5 rounded-xl text-slate-200">2x</button>
+                                <button type="button" id="calcPrice3xBtn" class="flex-1 bg-slate-800 text-xs font-bold py-2.5 rounded-xl text-indigo-300">3x</button>
+                                <button type="button" id="calcPrice4xBtn" class="flex-1 bg-slate-800 text-xs font-bold py-2.5 rounded-xl text-emerald-300">4x</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="saveCatalogProductBtn" class="w-full bg-indigo-600 text-white font-extrabold py-3.5 rounded-2xl">Ürünü Buluta Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEKME 3: SİPARİŞLER -->
+    <section id="tabSiparisler" class="tab-section hidden space-y-4">
+        <div class="glass-card rounded-2xl p-5 space-y-4">
+            <div class="flex justify-between border-b border-slate-800 pb-4"><h2 class="text-lg font-bold text-white"><i class="fa-solid fa-receipt text-emerald-400"></i> Siparişler</h2></div>
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Ürün</label><select id="newOrderProductSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></select></div>
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Müşteri</label><select id="newOrderCustomerSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></select></div>
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Platform</label><select id="newOrderPlatformSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"><option>Elden</option><option>Dolap</option><option>N11</option><option>Shopier</option><option>Instagram</option></select></div>
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Satış (₺)</label><input type="number" id="newOrderPriceInput" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
+                <button type="button" id="createOrderBtn" class="bg-emerald-600 text-white font-bold text-xs py-2.5 rounded-xl">Sipariş Ekle</button>
+            </div>
+            <div id="ordersListContainer" class="space-y-2.5"></div>
+        </div>
+    </section>
+
+    <!-- SEKME 4: FİLAMENT -->
+    <section id="tabFilament" class="tab-section hidden space-y-4">
+        <div class="glass-card rounded-2xl p-5 space-y-4">
+            <div class="border-b border-slate-800 pb-4"><h2 class="text-lg font-bold text-white"><i class="fa-solid fa-compact-disc text-amber-400"></i> Filament Envanteri</h2></div>
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Filament Adı</label><input type="text" id="newMatName" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Kalan (g)</label><input type="number" id="newMatStock" value="1000" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Kg Fiyatı (₺)</label><input type="number" id="newMatPrice" value="650" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
+                <button type="button" id="addMaterialBtn" class="bg-amber-500 text-slate-950 font-bold text-xs py-2.5 rounded-xl">+ Ekle</button>
+            </div>
+            <div id="materialsGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+        </div>
+    </section>
+
+    <!-- SEKME 5: MÜŞTERİLER -->
+    <section id="tabMusteriler" class="tab-section hidden space-y-4">
+        <div class="glass-card rounded-2xl p-5 space-y-4">
+            <div class="border-b border-slate-800 pb-4"><h2 class="text-lg font-bold text-white"><i class="fa-solid fa-users text-sky-400"></i> Müşteriler</h2></div>
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Ad Soyad</label><input type="text" id="newCustName" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Nick</label><input type="text" id="newCustNick" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Telefon</label><input type="text" id="newCustPhone" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Platform</label><select id="newCustPlatform" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"><option>Dolap</option><option>N11</option><option>Elden</option></select></div>
+                <button type="button" id="addCustomerBtn" class="bg-sky-600 text-white font-bold text-xs py-2.5 rounded-xl">+ Ekle</button>
+            </div>
+            <div id="customersGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+        </div>
+    </section>
+
+    <!-- SEKME 6: AYARLAR -->
+    <section id="tabAyarlar" class="tab-section hidden space-y-4">
+        <div class="glass-card rounded-2xl p-5 space-y-5">
+            <div class="border-b border-slate-800 pb-4"><h2 class="text-lg font-bold text-white"><i class="fa-solid fa-sliders text-indigo-400"></i> Ayarlar & Yedek</h2></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+                    <h3 class="text-sm font-bold text-white mb-2">Üretim Parametreleri</h3>
+                    <label class="block text-xs text-slate-300 mb-1">Saatlik Elektrik Maliyeti (₺)</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="settingHourlyRate" value="5" step="0.5" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+                        <button type="button" id="saveSettingsBtn" class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl">Kaydet</button>
+                    </div>
+                </div>
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+                    <h3 class="text-sm font-bold text-white mb-2">Eski JSON Verilerini Buluta Yükle</h3>
+                    <label for="importJsonInput" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 justify-center">
+                        <i class="fa-solid fa-upload"></i> JSON Dosyası Seç ve Buluta Yükle
+                    </label>
+                    <input type="file" id="importJsonInput" accept=".json" class="hidden">
+                    <p class="text-[10px] text-slate-400 mt-2 text-center">Eski verilerinizin olduğu JSON dosyasını seçtiğiniz an hepsi otomatik olarak Firebase sunucusuna yüklenir.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<nav class="md:hidden fixed bottom-0 inset-x-0 z-40 glass-card border-t border-slate-800 px-2 py-2 flex items-center justify-around">
+    <button class="nav-btn active flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold" data-tab="tabVitrin"><i class="fa-solid fa-store text-sm"></i>Vitrin</button>
+    <button class="nav-btn text-slate-400 flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold" data-tab="tabEkle"><i class="fa-solid fa-plus-circle text-sm"></i>Ekle</button>
+    <button class="nav-btn text-slate-400 flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold" data-tab="tabSiparisler"><i class="fa-solid fa-cart-shopping text-sm"></i>Sipariş</button>
+    <button class="nav-btn text-slate-400 flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold" data-tab="tabFilament"><i class="fa-solid fa-compact-disc text-sm"></i>Filament</button>
+    <button class="nav-btn text-slate-400 flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold" data-tab="tabMusteriler"><i class="fa-solid fa-users text-sm"></i>Müşteri</button>
+</nav>
+
+<div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
