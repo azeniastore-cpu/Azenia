@@ -179,9 +179,16 @@
     <!-- SEKME 4: FİLAMENT -->
     <section id="tabFilament" class="tab-section hidden space-y-4">
         <div class="glass-card rounded-2xl p-5 space-y-4">
-            <div class="border-b border-slate-800 pb-4"><h2 class="text-lg font-bold text-white"><i class="fa-solid fa-compact-disc text-amber-400"></i> Filament Envanteri</h2></div>
-            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-                <div><label class="block text-xs font-bold text-slate-300 mb-1">Filament Adı</label><input type="text" id="newMatName" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-3">
+                <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-compact-disc text-amber-400"></i> Filament Envanteri</h2>
+                <div class="flex gap-2">
+                    <select id="filterMatBrand" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white"><option value="Tümü">Tüm Markalar</option></select>
+                    <select id="filterMatColor" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white"><option value="Tümü">Tüm Renkler</option></select>
+                </div>
+            </div>
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Marka</label><input type="text" id="newMatBrand" placeholder="Örn: Porima" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
+                <div><label class="block text-xs font-bold text-slate-300 mb-1">Renk</label><input type="text" id="newMatColor" placeholder="Örn: Siyah" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
                 <div><label class="block text-xs font-bold text-slate-300 mb-1">Kalan (g)</label><input type="number" id="newMatStock" value="1000" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
                 <div><label class="block text-xs font-bold text-slate-300 mb-1">Kg Fiyatı (₺)</label><input type="number" id="newMatPrice" value="650" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"></div>
                 <button type="button" id="addMaterialBtn" class="bg-amber-500 text-slate-950 font-bold text-xs py-2.5 rounded-xl">+ Ekle</button>
