@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azenia (Guven_3D) - Stok, Maliyet & Sipariş Yönetim Sistemi B5.0 Cloud</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen pb-24 md:pb-10">
+
+<!-- YÖNETİCİ GİRİŞ EKRANI -->
+<div id="adminLoginScreen" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-900 text-white">
+    <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center w-80 border border-slate-700">
+        <h2 class="text-2xl font-bold mb-2">Azenia Panel</h2>
+        <p class="text-slate-400 text-sm mb-6 text-center">Kullanıcı adı ve şifrenizle giriş yapın</p>
+        <input type="text" id="loginUser" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-center text-lg text-white focus:outline-none focus:border-indigo-500 mb-3" placeholder="Kullanıcı Adı (Örn: admin)">
+        <input type="password" id="loginPass" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-center text-lg text-white focus:outline-none focus:border-indigo-500 mb-4" placeholder="Şifre">
+        <button onclick="firebaseLogin()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition-colors">Giriş Yap</button>
+        <p id="loginError" class="text-red-400 text-sm mt-3 hidden text-center">Hatalı kullanıcı adı veya şifre!</p>
+    </div>
+</div>
+
+<!-- ÜST BAR -->
+<header class="sticky top-0 z-30 glass-card border-b border-slate-800 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-cube text-xl text-white"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-lg font-extrabold tracking-tight text-white">AZENIA <span class="text-indigo-400 font-semibold">Guven_3D</span></h1>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">B5.0 Cloud</span>
+                </div>
+                <p id="cloudStatusText" class="text-xs text-slate-400 flex items-center gap-1.5">
+                    <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+                    <span>Sistem Başlatılıyor...</span>
+                </p>
+            </div>
+        </div>
+
+        <nav class="hidden md:flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+            <button type="button" class="nav-btn active px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2" data-tab="tabVitrin"><i class="fa-solid fa-store"></i> Vitrin (<span id="badgeCatalogCount">0</span>)</button>
+            <button type="button" class="nav-btn text-slate-300 hover:text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2" data-tab="tabEkle"><i class="fa-solid fa-plus-circle"></i> Ürün Ekle & Maliyet</button>
+            <button type="button" class="nav-btn text-slate-300 hover:text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2" data-tab="tabSiparisler"><i class="fa-solid fa-cart-shopping"></i> Siparişler (<span id="badgeOrderCount">0</span>)</button>
+            <button type="button" class="nav-btn text-slate-300 hover:text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2" data-tab="tabFilament"><i class="fa-solid fa-compact-disc"></i> Filament Stoğu</button>
+            <button type="button" class="nav-btn text-slate-300 hover:text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2" data-tab="tabMusteriler"><i class="fa-solid fa-users"></i> Müşteriler</button>
+            <button type="button" class="nav-btn text-slate-300 hover:text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2" data-tab="tabAyarlar"><i class="fa-solid fa-gear"></i> Ayarlar</button>
+        </nav>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 pt-5 space-y-6">
+
+    <!-- METRİK KARTLARI -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="glass-card rounded-2xl p-4">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-medium"><span>Katalog & Stok</span><i class="fa-solid fa-boxes-stacked text-indigo-400"></i></div>
+            <div class="mt-2 flex items-baseline gap-2"><span id="statTotalProducts" class="text-2xl font-extrabold text-white">0</span><span class="text-xs text-slate-400">model / <strong id="statTotalStockUnits" class="text-indigo-300">0</strong> adet</span></div>
+        </div>
+        <div class="glass-card rounded-2xl p-4">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-medium"><span>Satış Cirosu</span><i class="fa-solid fa-sack-dollar text-emerald-400"></i></div>
+            <div class="mt-2 flex items-baseline gap-2"><span id="statTotalRevenue" class="text-2xl font-extrabold text-emerald-400">₺0</span><span id="statOrderCountSub" class="text-xs text-slate-400">0 sipariş</span></div>
+        </div>
+        <div class="glass-card rounded-2xl p-4">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-medium"><span>Net Kâr</span><i class="fa-solid fa-chart-line text-sky-400"></i></div>
+            <div class="mt-2 flex items-baseline gap-2"><span id="statTotalProfit" class="text-2xl font-extrabold text-sky-400">₺0</span></div>
+        </div>
+        <div class="glass-card rounded-2xl p-4">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-medium"><span>Filament Stoğu</span><i class="fa-solid fa-layer-group text-amber-400"></i></div>
+            <div class="mt-2 flex items-baseline gap-2"><span id="statTotalFilamentGrams" class="text-2xl font-extrabold text-amber-400">0g</span></div>
+        </div>
+    </section>
+
+    <!-- SEKME 1: VİTRİN -->
+    <section id="tabVitrin" class="tab-section space-y-4">
+        <div class="glass-card rounded-2xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="vitrinSearchInput" placeholder="Arama yap..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" id="adminLinkToggleBtn" onclick="toggleModelLinks()" class="hidden bg-sky-600/20 hover:bg-sky-600/40 text-sky-300 border border-sky-500/30 font-bold text-sm px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-eye"></i> Linkleri Aç/Kapat
+                </button>
+                <select id="vitrinCategoryFilter" class="bg-slate-900/90 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    <option value="Tümü">Tüm Kategoriler</option>
+                    <option value="Hediyelik">Hediyelik</option>
+                    <option value="Biblo/Figür">Biblo/Figür</option>
+                    <option value="Anahtarlık">Anahtarlık</option>
+                    <option value="Dekorasyon">Dekorasyon</option>
+                    <option value="Aparat/Yedek Parça">Aparat/Yedek Parça</option>
+                </select>
+                <button type="button" onclick="navSwitch('tabEkle')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Ürün Ekle
+                </button>
+            </div>
+        </div>
+        <div id="vitrinGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- SEKME 2: ÜRÜN EKLE -->
+    <section id="tabEkle" class="tab-section hidden space-y-5">
+        <div class="glass-card rounded-2xl p-5 md:p-6">
+            <div class="border-b border-slate-800 pb-4 mb-5">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-cloud-arrow-up text-indigo-400"></i> Buluta Ürün Kaydet</h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-2">Ürün Görseli</label>
+                        <div class="flex items-center gap-4">
+                            <label for="prodImageInput" class="cursor-pointer group">
+                                <div id="imgPreview" class="w-28 h-28 rounded-2xl bg-slate-900 border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden"><i class="fa-solid fa-camera text-2xl text-slate-400"></i></div>
+                            </label>
+                            <input type="file" id="prodImageInput" accept="image/*" class="block w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white cursor-pointer">
+                        </div>
+                    </div>
+                    <div><label class="block text-xs font-bold text-slate-300 mb-1">Ürün Adı *</label><input type="text" id="prodName" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white"></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-bold text-slate-300 mb-1">Kategori</label><select id="prodCategory" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white"><option value="Hediyelik">Hediyelik</option><option value="Biblo/Figür">Biblo/Figür</option><option value="Anahtarlık">Anahtarlık</option><option value="Dekorasyon">Dekorasyon</option><option value="Aparat/Yedek Parça">Aparat/Yedek Parça</option></select></div>
+                        <div><label class="block text-xs font-bold text-slate-300 mb-1">Başlangıç Stok</label><input type="number" id="prodStockCount" value="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white"></div>
+                    </div>
+                    <div><label class="block text-xs font-bold text-slate-300 mb-1">Açıklama</label><textarea id="prodDesc" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white"></textarea></div>
+                    <div><label class="block text-xs font-bold text-slate-300 mb-1">Etiketler</label><input type="text" id="prodTags" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white"></div>
+                    <div id="adminLinkInputGroup" class="hidden pt-1"><label class="block text-xs font-bold text-sky-400 mb-1"><i class="fa-solid fa-link"></i> Model Kaynak Linki (Gizli)</label><input type="text" id="prodModelLink" placeholder="Makerworld, Printables vb." class="w-full bg-slate-950 border border-sky-900/50 rounded-xl px-3.5 py-2 text-sm text-sky-100"></div>
+                </div>
+
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="bg-slate-900/90 border border-slate-8
