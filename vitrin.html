@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azenia 3D Baskı Vitrini</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-card { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.14); }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <!-- ÜST BAŞLIK & SEPET BUTONU -->
+    <header class="sticky top-0 z-30 glass-card border-b border-slate-800 px-4 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-store text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-extrabold tracking-tight text-white">AZENIA <span class="text-indigo-400 font-semibold">Koleksiyonu</span></h1>
+                    <p class="text-xs text-slate-400">3D Baskı Ürün ve Model Vitrini</p>
+                </div>
+            </div>
+            
+            <button onclick="toggleCartModal()" class="relative bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-indigo-600/30">
+                <i class="fa-solid fa-cart-shopping text-sm"></i>
+                <span>Sepetim</span>
+                <span id="cartBadge" class="absolute -top-2 -right-2 bg-emerald-500 text-slate-950 text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900 hidden">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- İÇERİK & ÜRÜN GRID -->
+    <main class="max-w-6xl mx-auto px-4 pt-6 space-y-6">
+        
+        <!-- ARAMA VE FİLTRE -->
+        <div class="glass-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="relative w-full sm:flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="vitrinSearch" placeholder="Model veya kategori ara..." class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <select id="vitrinCat" class="w-full sm:w-auto bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                <option value="Tümü">Tüm Kategoriler</option>
+                <option value="Hediyelik">Hediyelik</option>
+                <option value="Biblo/Figür">Biblo/Figür</option>
+                <option value="Anahtarlık">Anahtarlık</option>
+                <option value="Dekorasyon">Dekorasyon</option>
+                <option value="Aparat/Yedek Parça">Aparat/Yedek Parça</option>
+            </select>
+        </div>
+
+        <!-- ÜRÜNLERİN LİSTELENECEĞİ ALAN -->
+        <div id="customerVitrinGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+
+    </main>
+
+    <!-- SEPET MODALI (PENCERESİ) -->
+    <div id="cartModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-700 p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping text-indigo-400"></i> Sepetim
+                </h3>
+                <button onclick="toggleCartModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div id="cartItemsList" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                <!-- Sepet ürünleri buraya dolacak -->
+            </div>
+
+            <div class="border-t border-slate-800 pt-3 flex items-center justify-between text-base font-extrabold">
+                <span class="text-slate-300">Toplam Tutar:</span>
+                <span id="cartTotalPrice" class="text-emerald-400 text-xl">₺0</span>
+            </div>
+
+            <div class="space-y-2 pt-2">
+                <button onclick="checkoutWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30">
+                    <i class="fa-brands fa-whatsapp text-lg"></i> WhatsApp ile Sipariş Ver
+                </button>
+                <p class="text-[11px] text-slate-400 text-center">Sepetinizdeki ürünler sipariş metni olarak WhatsApp üzerinden gönderilecektir.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- BİLDİRİM TOAST -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqNlKNZAqp2R7EFYin95UY67xp3WikVvA",
+            authDomain: "azenia-stok-d5896.firebaseapp.com",
+            projectId: "azenia-stok-d5896",
+            storageBucket: "azenia-stok-d5896.firebasestorage.app",
+            messagingSenderId: "200511374655",
+            appId: "1:200511374655:web:947f20ca18e9aef4003f8a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let publicCatalog = [];
+        let cart = [];
+
+        function showToast(message) {
+            const container = document.getElementById("toastContainer");
+            if (!container) return;
+            const toast = document.createElement("div");
+            toast.className = "pointer-events-auto px-4 py-3 rounded-xl bg-indigo-600 border border-indigo-400 text-white shadow-xl text-xs font-bold flex items-center gap-2";
+            toast.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        function loadPublicCatalog() {
+            // onSnapshot (canlı dinleme) yerine get() (tek seferlik okuma) kullanıyoruz
+            db.collection('guven3d_urunler').get().then((snapshot) => {
+                publicCatalog = [];
+                snapshot.forEach((doc) => {
+                    publicCatalog.push({ id: doc.id, ...doc.data() });
+                });
+                renderPublicVitrin();
+            }).catch((error) => {
+                console.error("Vitrin yüklenirken hata:", error);
+            });
+        }
+
+        function renderPublicVitrin() {
+            const grid = document.getElementById('customerVitrinGrid');
+            const search = (document.getElementById('vitrinSearch').value || '').toLowerCase().trim();
+            const cat = document.getElementById('vitrinCat').value;
+
+            const filtered = publicCatalog.filter(item => {
+                const matchesCat = cat === 'Tümü' || item.category === cat;
+                const matchesSearch = !search || item.name.toLowerCase().includes(search) || (item.tags && item.tags.toLowerCase().includes(search));
+                return matchesCat && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full glass-card rounded-2xl p-12 text-center space-y-3">
+                        <i class="fa-solid fa-box-open text-4xl text-slate-500"></i>
+                        <p class="text-sm font-bold text-slate-300">Vitrinimizde henüz bu kriterlere uygun ürün bulunmuyor.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(prod => {
+                const imgHtml = prod.image 
+                    ? `<img src="${prod.image}" class="w-full h-full object-cover">` 
+                    : `<div class="w-full h-full flex items-center justify-center bg-slate-900 text-slate-600"><i class="fa-solid fa-cube text-4xl"></i></div>`;
+
+                return `
+                    <div class="glass-card rounded-2xl overflow-hidden border border-slate-800 flex flex-col justify-between">
+                        <div>
+                            <div class="relative h-52 bg-slate-950 overflow-hidden">
+                                ${imgHtml}
+                                <span class="absolute top-3 left-3 bg-slate-950/80 backdrop-blur px-2.5 py-1 rounded-lg text-[11px] font-bold text-indigo-300 border border-indigo-500/30">
+                                    ${prod.category || 'Genel'}
+                                </span>
+                            </div>
+                            <div class="p-4 space-y-2">
+                                <h3 class="text-base font-extrabold text-white">${prod.name}</h3>
+                                <p class="text-xs text-slate-400 line-clamp-2">${prod.description || 'Detaylı 3D baskı modeli.'}</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-900/80 border-t border-slate-800 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Fiyat</span>
+                                <span class="text-xl font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20">₺${Number(prod.sellPrice || 0).toFixed(0)}</span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 relative">
+                                    <input type="number" id="qty_${prod.id}" value="1" min="1" max="50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-center font-bold text-white focus:outline-none focus:border-indigo-500">
+                                </div>
+                                <button type="button" onclick="addToCart('${prod.id}', '${prod.name.replace(/'/g, "")}', ${Number(prod.sellPrice || 0)})" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
+                                    <i class="fa-solid fa-cart-plus"></i> Sepete Ekle
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addToCart(id, name, price) {
+            const qtyInput = document.getElementById(`qty_${id}`);
+            const qty = parseInt(qtyInput ? qtyInput.value : 1, 10) || 1;
+
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                existing.qty += qty;
+            } else {
+                cart.push({ id, name, price, qty });
+            }
+
+            updateCartUI();
+            showToast(`${name} (${qty} adet) sepete eklendi!`);
+        }
+
+        function updateCartUI() {
+            const badge = document.getElementById('cartBadge');
+            const list = document.getElementById('cartItemsList');
+            const totalEl = document.getElementById('cartTotalPrice');
+
+            const totalCount = cart.reduce((acc, item) => acc + item.qty, 0);
+            const totalPrice = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+
+            if (totalCount > 0) {
+                badge.textContent = totalCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            totalEl.textContent = `₺${totalPrice.toFixed(0)}`;
+
+            if (cart.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Sepetiniz henüz boş.</p>`;
+                return;
+            }
+
+            list.innerHTML = cart.map((item, idx) => `
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
+                    <div>
+                        <div class="text-sm font-bold text-white">${item.name}</div>
+                        <div class="text-xs text-slate-400">${item.qty} adet x ₺${item.price} = <strong class="text-emerald-400">₺${item.qty * item.price}</strong></div>
+                    </div>
+                    <button onclick="removeFromCart(${idx})" class="text-rose-400 hover:text-rose-300 text-xs px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeFromCart(idx) {
+            cart.splice(idx, 1);
+            updateCartUI();
+        }
+
+        function toggleCartModal() {
+            const modal = document.getElementById('cartModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function checkoutWhatsApp() {
+            if (cart.length === 0) {
+                showToast("Sepetiniz boş!");
+                return;
+            }
+
+            let message = "Merhaba, Azenia Vitrin'den aşağıdaki ürünleri sipariş vermek istiyorum:\n\n";
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                const sub = item.price * item.qty;
+                total += sub;
+                message += `${index + 1}. ${item.name} - ${item.qty} Adet (₺${sub})\n`;
+            });
+
+            message += `\n*Toplam Tutar: ₺${total}*`;
+
+            // Kendi WhatsApp numaranı buraya yazabilirsin (Örn: 905XXXXXXXXX)
+            const phone = "905000000000"; 
+            const url = `https://wa.me/${phone}?text=` + encodeURIComponent(message);
+            window.open(url, '_blank');
+        }
+
+        document.getElementById('vitrinSearch').addEventListener('input', renderPublicVitrin);
+        document.getElementById('vitrinCat').addEventListener('change', renderPublicVitrin);
+
+        loadPublicCatalog();
+    </script>
+</body>
+</html>
